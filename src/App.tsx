@@ -2,6 +2,8 @@ import { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from "./components/Home";
 import MarkdownViewer from "./components/MarkdownViewer";
+import NotFound from "./components/NotFound";
+import About from "./components/About";
 
 function App() {
   const [markdownText, setMarkdownText] = useState("");
@@ -21,7 +23,14 @@ function App() {
       <Routes>
         <Route 
           path="/" 
-          element={<Home markdownText={markdownText} setMarkdownText={setMarkdownText} />} 
+          element={
+            <Home 
+              markdownText={markdownText} 
+              setMarkdownText={setMarkdownText}
+              toggleTheme={toggleTheme}
+              isDarkMode={darkMode}
+            />
+          } 
         />
         <Route 
           path="/viewer" 
@@ -42,6 +51,14 @@ function App() {
               isDarkMode={darkMode} 
             />
           } 
+        />
+        <Route 
+          path="/about" 
+          element={<About />} 
+        />
+        <Route 
+          path="*" 
+          element={<NotFound />} 
         />
       </Routes>
     </Router>

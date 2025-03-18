@@ -4,14 +4,13 @@ import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import ShareButton from "./ShareButton";
+import NotFound from "./NotFound";
+import { Sun, Moon, Info } from 'lucide-react';
 
-interface MarkdownViewerProps {
-  markdownText: string;
-  toggleTheme: () => void;
-  isDarkMode: boolean;
-}
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMode }: MarkdownViewerProps) => {
+const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMode }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [markdownText, setMarkdownText] = useState(propMarkdownText);
@@ -20,6 +19,12 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
   useEffect(() => {
     const fetchSharedContent = async () => {
       if (id) {
+        // Validate UUID format before making the request
+        if (!UUID_REGEX.test(id)) {
+          setError("Invalid share link format");
+          return;
+        }
+
         try {
           const { data, error } = await supabase
             .from('shared_markdown')
@@ -57,10 +62,15 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
 
   // Configure marked options for better security and features
   marked.setOptions({
-    gfm: true, // GitHub Flavored Markdown
-    breaks: true, // Convert line breaks to <br>
-    sanitize: true, // Sanitize HTML input
+    gfm: true,
+    breaks: true,
+    sanitize: true,
   });
+
+  // If there's an error, show the NotFound component with the specific error message
+  if (error) {
+    return <NotFound message={error} />;
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
@@ -75,31 +85,34 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
           </button>
           {!id && <ShareButton markdownText={markdownText} />}
         </div>
-        <button
-          className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          onClick={toggleTheme}
-        >
-          {isDarkMode ? "Light Mode" : "Dark Mode"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/about")}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title="About"
+          >
+            <Info size={20} />
+            <span className="hidden sm:inline">About</span>
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            <span className="hidden sm:inline">
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-200">
-            {error}
-          </div>
-        </div>
-      )}
-
       {/* Markdown Content */}
-      {!error && (
-        <div className="container mx-auto px-4 py-8">
-          <div className="prose dark:prose-invert prose-sm sm:prose lg:prose-lg mx-auto">
-            <div dangerouslySetInnerHTML={{ __html: marked(markdownText || '') }} />
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="prose dark:prose-invert prose-sm sm:prose lg:prose-lg mx-auto">
+          <div dangerouslySetInnerHTML={{ __html: marked(markdownText || '') }} />
         </div>
-      )}
+      </div>
     </div>
   );
 };
