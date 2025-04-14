@@ -108,8 +108,23 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
       </div>
 
       {/* Markdown Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="prose dark:prose-invert prose-sm sm:prose lg:prose-lg mx-auto">
+      <div className="container mx-auto px-2 sm:px-4 py-8 max-w-5xl lg:max-w-7xl xl:max-w-[90rem]">
+        <div className="prose dark:prose-invert prose-sm sm:prose lg:prose-lg xl:prose-xl mx-auto overflow-x-auto max-w-none">
+          <style>
+            {`
+              .prose pre {
+                overflow-x: auto;
+                white-space: pre;
+                position: relative;
+              }
+              .prose table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                white-space: nowrap;
+              }
+            `}
+          </style>
           <div dangerouslySetInnerHTML={{ __html: marked(markdownText || '') }} />
         </div>
       </div>
