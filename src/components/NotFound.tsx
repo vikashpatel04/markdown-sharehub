@@ -31,7 +31,7 @@ export default function NotFound({ message }: NotFoundProps) {
           <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
             <li className="flex items-center">
               <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full mr-2"></div>
-              The share link has expired
+              The shared link has expired
             </li>
             <li className="flex items-center">
               <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full mr-2"></div>
