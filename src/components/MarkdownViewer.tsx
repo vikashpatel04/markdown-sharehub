@@ -6,6 +6,8 @@ import { supabase } from "../lib/supabase";
 import ShareButton from "./ShareButton";
 import NotFound from "./NotFound";
 import { Sun, Moon, Info } from 'lucide-react';
+import { useToast } from "./ToastProvider";
+import { Check } from "lucide-react";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -15,6 +17,8 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
   const { id } = useParams();
   const [markdownText, setMarkdownText] = useState(propMarkdownText);
   const [error, setError] = useState("");
+  const [shareClicked, setShareClicked] = useState(false);
+  const showToast = useToast();
 
   useEffect(() => {
     const fetchSharedContent = async () => {
@@ -82,6 +86,23 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
             onClick={() => navigate("/")}
           >
             Back
+          </button>
+          <button
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href)
+                .then(() => {
+                  showToast("URL copied to clipboard!", "success");
+                  setShareClicked(true);
+                  setTimeout(() => setShareClicked(false), 1200);
+                })
+                .catch(() => showToast("Failed to copy URL.", "error"));
+            }}
+          >
+            {shareClicked ? (
+              <Check className="text-green-500" size={18} />
+            ) : null}
+            Share
           </button>
           {!id && <ShareButton markdownText={markdownText} />}
         </div>
