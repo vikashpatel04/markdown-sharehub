@@ -1,17 +1,25 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { marked } from "marked";
-import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import { supabase } from "../lib/supabase";
 import ShareButton from "./ShareButton";
 import NotFound from "./NotFound";
+import CodeBlock from "./CodeBlock";
 import { Sun, Moon, Info, Check, Clipboard } from 'lucide-react';
 import { useToast } from "./ToastProvider";
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMode }) => {
+interface MarkdownViewerProps {
+  markdownText: string;
+  toggleTheme: () => void;
+  isDarkMode: boolean;
+}
+
+const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMode }: MarkdownViewerProps) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [markdownText, setMarkdownText] = useState(propMarkdownText);
@@ -63,12 +71,17 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
     }
   }, [id, navigate]);
 
-  // Configure marked options for better security and features
-  marked.setOptions({
-    gfm: true,
-    breaks: true,
-    sanitize: true,
-  });
+  // Custom components for ReactMarkdown
+  const markdownComponents = useMemo(() => ({
+    table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
+      <div className="table-wrapper">
+        <table {...props}>{children}</table>
+      </div>
+    ),
+    pre: ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
+      <CodeBlock {...props}>{children}</CodeBlock>
+    ),
+  }), []);
 
   // If there's an error, show the NotFound component with the specific error message
   if (error) {
@@ -78,7 +91,7 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       {/* Navbar */}
-      <div className="sticky top-0 z-10 w-full flex justify-between items-center p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <div className="sticky top-0 z-10 w-full flex justify-between items-center p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
         <div className="flex gap-2">
           <button
             className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -131,34 +144,19 @@ const MarkdownViewer = ({ markdownText: propMarkdownText, toggleTheme, isDarkMod
       </div>
 
       {/* Markdown Content */}
-      <div className="container mx-auto px-2 sm:px-4 py-8 max-w-5xl lg:max-w-7xl xl:max-w-[90rem]">
-        <div className="prose dark:prose-invert prose-sm sm:prose lg:prose-lg xl:prose-xl mx-auto overflow-x-auto max-w-none">
-          <style>
-            {`
-              .prose pre {
-                overflow-x: auto;
-                white-space: pre;
-                position: relative;
-              }
-              .prose table {
-                display: block;
-                width: 100%;
-                overflow-x: auto;
-                white-space: nowrap;
-              }
-            `}
-          </style>
-          <div dangerouslySetInnerHTML={{ __html: marked(markdownText || '') }} />
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
+        <div className="markdown-body">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+            components={markdownComponents}
+          >
+            {markdownText || ''}
+          </ReactMarkdown>
         </div>
       </div>
     </div>
   );
-};
-
-MarkdownViewer.propTypes = {
-  markdownText: PropTypes.string.isRequired,
-  toggleTheme: PropTypes.func.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };
 
 export default MarkdownViewer;

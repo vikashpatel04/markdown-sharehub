@@ -1,19 +1,33 @@
 import { useNavigate } from "react-router-dom";
-import PropTypes from 'prop-types';
-import { marked } from 'marked';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import CodeBlock from "./CodeBlock";
 import { Split, Sun, Moon, Info } from 'lucide-react';
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-const Home = ({ markdownText, setMarkdownText, toggleTheme, isDarkMode }) => {
+interface HomeProps {
+  markdownText: string;
+  setMarkdownText: (text: string) => void;
+  toggleTheme: () => void;
+  isDarkMode: boolean;
+}
+
+const Home = ({ markdownText, setMarkdownText, toggleTheme, isDarkMode }: HomeProps) => {
   const navigate = useNavigate();
   const [isPreviewVisible, setIsPreviewVisible] = useState(true);
 
-  // Configure marked options
-  marked.setOptions({
-    gfm: true,
-    breaks: true,
-    sanitize: true,
-  });
+  // Custom components for ReactMarkdown
+  const markdownComponents = useMemo(() => ({
+    table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
+      <div className="table-wrapper">
+        <table {...props}>{children}</table>
+      </div>
+    ),
+    pre: ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
+      <CodeBlock {...props}>{children}</CodeBlock>
+    ),
+  }), []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-black text-gray-800 dark:text-gray-200">
@@ -84,14 +98,19 @@ const Home = ({ markdownText, setMarkdownText, toggleTheme, isDarkMode }) => {
             <div className="hidden lg:flex w-1/2 p-4">
               <div className="h-full w-full flex flex-col">
                 <h2 className="text-lg font-medium mb-2">Preview</h2>
-                <div 
+                <div
                   className="flex-grow w-full p-4 border border-gray-300 dark:border-gray-700 rounded-lg 
                             bg-white dark:bg-gray-800 overflow-auto"
                 >
-                  <div 
-                    className="prose dark:prose-invert prose-sm sm:prose lg:prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ __html: marked(markdownText || '') }}
-                  />
+                  <div className="markdown-body">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeHighlight]}
+                      components={markdownComponents}
+                    >
+                      {markdownText || ''}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             </div>
@@ -115,13 +134,6 @@ const Home = ({ markdownText, setMarkdownText, toggleTheme, isDarkMode }) => {
       </div>
     </div>
   );
-};
-
-Home.propTypes = {
-  markdownText: PropTypes.string.isRequired,
-  setMarkdownText: PropTypes.func.isRequired,
-  toggleTheme: PropTypes.func.isRequired,
-  isDarkMode: PropTypes.bool.isRequired,
 };
 
 export default Home;
